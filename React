@@ -1,0 +1,65 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+function App() {
+  const [cache, setCache] = useState({});
+  const [key, setKey] = useState('');
+  const [value, setValue] = useState('');
+  const [duration, setDuration] = useState(5);
+
+  useEffect(() => {
+    // Optionally, you could set up WebSocket here to listen for cache updates
+  }, []);
+
+  const handleGet = async () => {
+    try {
+      const response = await axios.get(`/get?key=${key}`);
+      setCache({ ...cache, [key]: response.data.value });
+    } catch (error) {
+      console.error('Error fetching key:', error);
+    }
+  };
+
+  const handleSet = async () => {
+    try {
+      await axios.post('/set', { key, value, duration });
+      setCache({ ...cache, [key]: value });
+    } catch (error) {
+      console.error('Error setting key:', error);
+    }
+  };
+
+  const handleDelete = async (key) => {
+    try {
+      await axios.delete(`/delete?key=${key}`);
+      const updatedCache = { ...cache };
+      delete updatedCache[key];
+      setCache(updatedCache);
+    } catch (error) {
+      console.error('Error deleting key:', error);
+    }
+  };
+
+  return (
+    <div>
+      <h1>LRU Cache</h1>
+      <div>
+        <input type="text" placeholder="Key" value={key} onChange={(e) => setKey(e.target.value)} />
+        <input type="text" placeholder="Value" value={value} onChange={(e) => setValue(e.target.value)} />
+        <input type="number" placeholder="Duration (seconds)" value={duration} onChange={(e) => setDuration(e.target.value)} />
+        <button onClick={handleSet}>Set</button>
+        <button onClick={handleGet}>Get</button>
+      </div>
+      <div>
+        {Object.keys(cache).map((key) => (
+          <div key={key}>
+            <span>{key}: {cache[key]}</span>
+            <button onClick={() => handleDelete(key)}>Delete</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default App;
